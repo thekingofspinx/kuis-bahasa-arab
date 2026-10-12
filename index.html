@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kuis Bahasa Arab</title>
+<style>
+:root{--navy:#17324d;--blue:#2563eb;--pale:#eff6ff;--green:#15803d;--red:#b91c1c;--ink:#172033;--muted:#64748b}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#e0f2fe,#f8fafc 55%,#dcfce7);color:var(--ink);padding:24px}
+.app{max-width:820px;margin:0 auto}
+header{text-align:center;margin:12px 0 24px}
+.logo{font-size:42px;margin-bottom:8px}
+h1{margin:0;color:var(--navy);font-size:clamp(28px,5vw,40px)}
+.subtitle{color:var(--muted);margin:10px 0 0}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:22px;padding:clamp(18px,4vw,32px);box-shadow:0 15px 40px #0f172a12}
+.hidden{display:none!important}
+label{font-weight:700;display:block;margin:16px 0 8px}
+select,button{font:inherit}
+select{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:12px;background:#fff}
+button{cursor:pointer;border:0;border-radius:12px;padding:13px 18px;font-weight:700;transition:transform .12s,opacity .12s}
+button:active{transform:scale(.98)}
+.primary{background:var(--blue);color:#fff;width:100%;margin-top:22px}
+.secondary{background:#e2e8f0;color:#1e293b}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat{background:var(--pale);border-radius:14px;padding:12px;text-align:center}
+.stat span{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+.stat strong{font-size:20px;color:var(--navy)}
+.timer-wrap{height:9px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin:8px 0 22px}
+.timer-bar{height:100%;width:100%;background:#16a34a;transition:width .3s linear}
+.question-number{font-size:13px;color:var(--muted);font-weight:700}
+.question{font-size:clamp(20px,4vw,27px);font-weight:700;line-height:1.5;margin:12px 0 22px}
+.arabic{font-family:"Noto Naskh Arabic","Amiri","Traditional Arabic",serif;direction:rtl}
+.options{display:grid;gap:11px}
+.option{background:#f8fafc;color:#172033;border:2px solid #e2e8f0;text-align:left;display:flex;gap:12px;align-items:center;width:100%;line-height:1.4}
+.option .letter{width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border-radius:8px;background:#e2e8f0;font-weight:800}
+.option:hover:not(:disabled){border-color:#93c5fd;background:#eff6ff}
+.option:disabled{cursor:default;opacity:1}
+.option.correct{border-color:#22c55e;background:#f0fdf4;color:#166534}
+.option.wrong{border-color:#ef4444;background:#fef2f2;color:#991b1b}
+.feedback{margin-top:16px;padding:13px 15px;border-radius:12px;line-height:1.5}
+.feedback.good{background:#f0fdf4;color:#166534}
+.feedback.bad{background:#fef2f2;color:#991b1b}
+.actions{display:flex;gap:10px;margin-top:18px}
+.actions button{flex:1}
+.result{text-align:center}
+.result .big-score{font-size:56px;font-weight:800;color:var(--blue);margin:14px 0}
+.result h2{color:var(--navy)}
+.result-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:22px 0}
+.result-box{padding:16px;background:#f8fafc;border-radius:14px}
+.result-box strong{display:block;font-size:24px;margin-bottom:4px}
+.small{font-size:13px;color:var(--muted);line-height:1.5}
+footer{text-align:center;color:var(--muted);font-size:12px;margin:18px 0}
+@media(max-width:520px){body{padding:14px}.stats{gap:6px}.stat{padding:10px 4px}.stat strong{font-size:17px}.actions{flex-direction:column}.result-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">📚 🕌</div>
+    <h1>Kuis Bahasa Arab</h1>
+    <p class="subtitle">Uji kosakata dan tata bahasa Arabmu!</p>
+  </header>
+
+  <section class="card" id="start-screen">
+    <h2>Siap untuk tantangan?</h2>
+    <p>Pilih tingkat kesulitan. Setiap soal memiliki waktu menjawab dan nilai sesuai tingkatnya.</p>
+    <label for="level">Tingkat kesulitan</label>
+    <select id="level">
+      <option value="mudah">Mudah — kosakata dasar (10 soal, 20 detik/soal)</option>
+      <option value="sedang">Sedang — kosakata dan tata bahasa (10 soal, 15 detik/soal)</option>
+      <option value="sulit">Sulit — nahwu dan sharaf (10 soal, 12 detik/soal)</option>
+    </select>
+    <button class="primary" id="start-btn">▶ Mulai Permainan</button>
+    <p class="small">Petunjuk: pilih satu jawaban untuk setiap soal. Jawaban benar mendapatkan poin. Jika waktu habis, soal dianggap salah dan permainan berlanjut.</p>
+  </section>
+
+  <section class="card hidden" id="quiz-screen">
+    <div class="stats">
+      <div class="stat"><span>SKOR</span><strong id="score">0</strong></div>
+      <div class="stat"><span>WAKTU</span><strong id="timer">20</strong></div>
+      <div class="stat"><span>TINGKAT</span><strong id="level-label">Mudah</strong></div>
+    </div>
+    <div class="timer-wrap"><div class="timer-bar" id="timer-bar"></div></div>
+    <div class="question-number" id="question-number">SOAL 1 DARI 10</div>
+    <div class="question" id="question-text"></div>
+    <div class="options" id="options"></div>
+    <div id="feedback" aria-live="polite"></div>
+    <div class="actions">
+      <button class="secondary" id="quit-btn">Keluar</button>
+      <button class="primary hidden" id="next-btn" style="margin-top:0">Soal Berikutnya →</button>
+    </div>
+  </section>
+
+  <section class="card hidden result" id="result-screen">
+    <div class="logo" id="result-emoji">🏆</div>
+    <h2 id="result-title">Permainan Selesai!</h2>
+    <p id="result-message"></p>
+    <div class="big-score" id="final-score">0</div>
+    <p>poin</p>
+    <div class="result-grid">
+      <div class="result-box"><strong id="correct-count">0/10</strong><span>Jawaban benar</span></div>
+      <div class="result-box"><strong id="accuracy">0%</strong><span>Akurasi</span></div>
+    </div>
+    <button class="primary" id="again-btn">↻ Main Lagi</button>
+    <button class="secondary" id="home-btn" style="width:100%;margin-top:10px">Kembali ke Menu</button>
+  </section>
+  <footer>Game latihan mandiri • Bisa dimainkan offline • Semangat belajar! بالتوفيق</footer>
+</div>
+
+<script>
+const bank = {
+  mudah: [
+    {q:'Apa arti kata <span class="arabic">كِتَابٌ</span>?',o:['Buku','Pintu','Rumah','Pulpen'],a:0,e:'كِتَابٌ berarti buku.'},
+    {q:'Bahasa Arab dari “sekolah” adalah …',o:['مَسْجِدٌ','مَدْرَسَةٌ','مَكْتَبٌ','مَطْبَخٌ'],a:1,e:'مَدْرَسَةٌ berarti sekolah.'},
+    {q:'Apa arti <span class="arabic">مَاءٌ</span>?',o:['Susu','Makanan','Air','Teh'],a:2,e:'مَاءٌ berarti air.'},
+    {q:'Bahasa Arab dari “guru laki-laki” adalah …',o:['طَالِبٌ','مُدَرِّسٌ','طَبِيبٌ','تَاجِرٌ'],a:1,e:'مُدَرِّسٌ berarti guru laki-laki.'},
+    {q:'Apa arti <span class="arabic">بَيْتٌ</span>?',o:['Masjid','Kelas','Pasar','Rumah'],a:3,e:'بَيْتٌ berarti rumah.'},
+    {q:'Bahasa Arab dari “siswa laki-laki” adalah …',o:['طَالِبٌ','طَالِبَةٌ','مُعَلِّمَةٌ','أُسْتَاذَةٌ'],a:0,e:'طَالِبٌ berarti siswa laki-laki.'},
+    {q:'Apa arti <span class="arabic">قَلَمٌ</span>?',o:['Meja','Kursi','Pulpen','Buku'],a:2,e:'قَلَمٌ berarti pena atau pulpen.'},
+    {q:'Bahasa Arab dari “ibu” adalah …',o:['أَبٌ','أُمٌّ','أَخٌ','جَدٌّ'],a:1,e:'أُمٌّ berarti ibu.'},
+    {q:'Apa arti <span class="arabic">كَبِيرٌ</span>?',o:['Kecil','Baru','Dekat','Besar'],a:3,e:'كَبِيرٌ berarti besar.'},
+    {q:'Bahasa Arab dari “terima kasih” adalah …',o:['مَعَ السَّلَامَةِ','صَبَاحُ الْخَيْرِ','شُكْرًا','عَفْوًا'],a:2,e:'شُكْرًا berarti terima kasih.'},
+    {q:'Apa arti <span class="arabic">مَسْجِدٌ</span>?',o:['Masjid','Sekolah','Rumah sakit','Perpustakaan'],a:0,e:'مَسْجِدٌ berarti masjid.'},
+    {q:'Bahasa Arab dari “buku-buku” adalah …',o:['كِتَابَةٌ','كَاتِبٌ','مَكْتَبٌ','كُتُبٌ'],a:3,e:'كُتُبٌ adalah bentuk jamak dari كِتَابٌ.'}
+  ],
+  sedang: [
+    {q:'Manakah bentuk jamak dari <span class="arabic">طَالِبٌ</span>?',o:['طَالِبَةٌ','طُلَّابٌ','طَالِبَانِ','طَلَبَ'],a:1,e:'طُلَّابٌ adalah jamak taksir dari طَالِبٌ.'},
+    {q:'Dalam kalimat <span class="arabic">الْبَيْتُ كَبِيرٌ</span>, kata <span class="arabic">كَبِيرٌ</span> berkedudukan sebagai …',o:['مُبْتَدَأٌ','فَاعِلٌ','خَبَرٌ','مَفْعُولٌ بِهِ'],a:2,e:'كَبِيرٌ adalah خبر yang menyempurnakan makna mubtada.'},
+    {q:'Apa bentuk muannats dari <span class="arabic">مُعَلِّمٌ</span>?',o:['مُعَلِّمَةٌ','مُعَلِّمُونَ','عَالِمٌ','تَعْلِيمٌ'],a:0,e:'مُعَلِّمَةٌ adalah bentuk feminin dari مُعَلِّمٌ.'},
+    {q:'Huruf jar terdapat pada pilihan …',o:['هَلْ','فِي','لَنْ','لَمْ'],a:1,e:'فِي adalah huruf jar dan membuat isim sesudahnya majrur.'},
+    {q:'Apa arti kalimat <span class="arabic">ذَهَبَ الطَّالِبُ إِلَى الْمَدْرَسَةِ</span>?',o:['Guru pulang dari sekolah','Siswa pergi ke sekolah','Siswa membaca buku','Siswa berada di rumah'],a:1,e:'ذَهَبَ = pergi; الطَّالِبُ = siswa; إِلَى الْمَدْرَسَةِ = ke sekolah.'},
+    {q:'Manakah isim isyarah untuk “ini” (perempuan tunggal)?',o:['هَذَا','هَؤُلَاءِ','ذَلِكَ','هَذِهِ'],a:3,e:'هَذِهِ digunakan untuk menunjuk isim muannats tunggal.'},
+    {q:'Bentuk fi’il mudhari dari <span class="arabic">كَتَبَ</span> adalah …',o:['كِتَابٌ','كَاتِبٌ','يَكْتُبُ','مَكْتُوبٌ'],a:2,e:'يَكْتُبُ berarti sedang/akan menulis.'},
+    {q:'Dalam <span class="arabic">إِنَّ الطَّالِبَ مُجْتَهِدٌ</span>, kata <span class="arabic">الطَّالِبَ</span> adalah …',o:['اسم إنّ منصوب','خبر إنّ مرفوع','فاعل مرفوع','مضاف إليه مجرور'],a:0,e:'اسم إنّ berstatus manshub; tanda nashab pada الطَّالِبَ adalah fathah.'},
+    {q:'Apa bentuk mutsanna dari <span class="arabic">مُعَلِّمٌ</span> dalam keadaan rafa‘?',o:['مُعَلِّمِينَ','مُعَلِّمَاتٌ','مُعَلِّمَانِ','مُعَلِّمٌ'],a:2,e:'Mutsanna dalam keadaan rafa‘ umumnya berakhiran ـَانِ.'},
+    {q:'Kata <span class="arabic">الطَّالِبَ</span> dalam <span class="arabic">رَأَيْتُ الطَّالِبَ</span> berkedudukan sebagai …',o:['مُبْتَدَأٌ','مَفْعُولٌ بِهِ','فَاعِلٌ','خَبَرٌ'],a:1,e:'الطَّالِبَ adalah maf‘ul bih karena menjadi objek dari رَأَيْتُ.'},
+    {q:'Apa arti <span class="arabic">مَكْتَبَةٌ</span>?',o:['Perpustakaan','Penulis','Kantor pos','Papan tulis'],a:0,e:'مَكْتَبَةٌ berarti perpustakaan atau toko buku, sesuai konteks.'},
+    {q:'Manakah dhamir untuk “mereka (perempuan)”?',o:['هُمْ','هُمَا','هُنَّ','أَنْتُنَّ'],a:2,e:'هُنَّ berarti mereka perempuan.'}
+  ],
+  sulit: [
+    {q:'Apa tanda rafa‘ untuk الأَسْمَاءُ الْخَمْسَةُ jika memenuhi syaratnya?',o:['الضَّمَّةُ','الْأَلِفُ','الْوَاوُ','الْيَاءُ'],a:2,e:'الأسماء الخمسة dirafa‘kan dengan waw, misalnya أَبُوكَ.'},
+    {q:'Dalam <span class="arabic">لَمْ يَكْتُبْ</span>, fi’il mudhari menjadi …',o:['مَرْفُوعًا','مَنْصُوبًا','مَجْزُومًا','مَجْرُورًا'],a:2,e:'لَمْ adalah huruf jazm yang menjazmkan fi’il mudhari.'},
+    {q:'Manakah bentuk fi’il amr dari <span class="arabic">يَكْتُبُ</span> untuk أنتَ?',o:['كَتَبَ','اُكْتُبْ','كَاتِبٌ','يَكْتُبُونَ'],a:1,e:'Bentuk fi’il amr untuk أنتَ adalah اُكْتُبْ (tulislah!).'},
+    {q:'Dalam <span class="arabic">كَانَ الْجَوُّ جَمِيلًا</span>, kata <span class="arabic">جَمِيلًا</span> adalah …',o:['اسم كان مرفوع','خبر كان منصوب','فاعل مرفوع','مضاف إليه مجرور'],a:1,e:'خبر كان berstatus manshub, sehingga جَمِيلًا berharakat fathah.'},
+    {q:'Manakah contoh jamak mudzakkar salim dalam keadaan nashab?',o:['مُسْلِمُونَ','مُسْلِمِينَ','مُسْلِمَانِ','مُسْلِمَاتٌ'],a:1,e:'Jamak mudzakkar salim dinashabkan dengan ya, seperti رَأَيْتُ الْمُسْلِمِينَ.'},
+    {q:'Apa masdar yang umum dari fi’il <span class="arabic">عَلَّمَ</span>?',o:['عَالِمٌ','مُعَلِّمٌ','تَعْلِيمٌ','مَعْلُومٌ'],a:2,e:'Masdar dari عَلَّمَ (wazan فعّل) adalah تَعْلِيمٌ.'},
+    {q:'Dalam <span class="arabic">مَرَرْتُ بِالْمُعَلِّمِينَ</span>, tanda jar pada الْمُعَلِّمِينَ adalah …',o:['الضَّمَّةُ','الْفَتْحَةُ','الْيَاءُ','الْوَاوُ'],a:2,e:'Jamak mudzakkar salim dijarkan dengan ya.'},
+    {q:'Manakah contoh fi’il majhul (pasif) yang benar dari <span class="arabic">كَتَبَ</span>?',o:['كَاتَبَ','كُتِبَ','يَكْتُبُ','اُكْتُبْ'],a:1,e:'كَتَبَ dalam bentuk madhi majhul menjadi كُتِبَ (telah ditulis).'},
+    {q:'Dalam <span class="arabic">الطَّالِبَانِ مُجْتَهِدَانِ</span>, tanda rafa‘ pada kedua isim mutsanna adalah …',o:['الضَّمَّةُ','الْأَلِفُ','الْيَاءُ','النُّونُ'],a:1,e:'Isim mutsanna dirafa‘kan dengan alif: الطَّالِبَانِ.'},
+    {q:'Apa fungsi <span class="arabic">لَنْ</span> sebelum fi’il mudhari?',o:['Menjazmkan fi’il mudhari','Menashabkan fi’il mudhari','Menjadikan isim majrur','Menjadikan fi’il madhi'],a:1,e:'لَنْ adalah huruf nafi dan nashab untuk fi’il mudhari.'},
+    {q:'Dalam <span class="arabic">جَاءَ أَبُوكَ</span>, kata أَبُوكَ dirafa‘kan dengan …',o:['الضَّمَّةُ','الْأَلِفُ','الْوَاوُ','الْيَاءُ'],a:2,e:'أَبُوكَ termasuk الأسماء الخمسة dan dirafa‘kan dengan waw.'},
+    {q:'Wazan <span class="arabic">اِنْطَلَقَ</span> adalah …',o:['اِفْتَعَلَ','اِنْفَعَلَ','تَفَعَّلَ','فَاعَلَ'],a:1,e:'اِنْطَلَقَ mengikuti wazan اِنْفَعَلَ.'}
+  ]
+};
+
+const settings = {
+  mudah:{label:'Mudah',seconds:20,points:10},
+  sedang:{label:'Sedang',seconds:15,points:20},
+  sulit:{label:'Sulit',seconds:12,points:30}
+};
+const $ = id => document.getElementById(id);
+let questions=[], current=0, score=0, correct=0, seconds=20, remaining=20, timerId=null, answered=false, chosenLevel='mudah';
+
+function shuffle(arr){
+  const copy=[...arr];
+  for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}
+  return copy;
+}
+function startGame(){
+  clearInterval(timerId);
+  chosenLevel=$('level').value;
+  const config=settings[chosenLevel];
+  questions=shuffle(bank[chosenLevel]).slice(0,10);
+  current=0;score=0;correct=0;seconds=config.seconds;
+  $('score').textContent=score;
+  $('level-label').textContent=config.label;
+  $('start-screen').classList.add('hidden');
+  $('result-screen').classList.add('hidden');
+  $('quiz-screen').classList.remove('hidden');
+  showQuestion();
+}
+function showQuestion(){
+  clearInterval(timerId);
+  answered=false;
+  remaining=seconds;
+  $('timer').textContent=remaining;
+  $('timer-bar').style.width='100%';
+  $('timer-bar').style.background='#16a34a';
+  $('question-number').textContent=`SOAL ${current+1} DARI ${questions.length}`;
+  $('question-text').innerHTML=questions[current].q;
+  $('feedback').innerHTML='';
+  $('next-btn').classList.add('hidden');
+  $('options').innerHTML='';
+  const letters=['A','B','C','D'];
+  questions[current].o.forEach((option,index)=>{
+    const btn=document.createElement('button');
+    btn.className='option';
+    btn.innerHTML=`<span class="letter">${letters[index]}</span><span>${option}</span>`;
+    btn.addEventListener('click',()=>chooseAnswer(index));
+    $('options').appendChild(btn);
+  });
+  timerId=setInterval(()=>{
+    remaining--;
+    $('timer').textContent=remaining;
+    $('timer-bar').style.width=(remaining/seconds*100)+'%';
+    if(remaining<=5)$('timer-bar').style.background='#dc2626';
+    if(remaining<=0){clearInterval(timerId);timeExpired();}
+  },1000);
+}
+function chooseAnswer(index){
+  if(answered)return;
+  answered=true;clearInterval(timerId);
+  const q=questions[current];
+  const buttons=[...$('options').querySelectorAll('button')];
+  buttons.forEach(b=>b.disabled=true);
+  if(index===q.a){
+    correct++;
+    score+=settings[chosenLevel].points;
+    $('score').textContent=score;
+    buttons[index].classList.add('correct');
+    $('feedback').innerHTML=`<div class="feedback good">✓ Benar! ${q.e}</div>`;
+  }else{
+    buttons[index].classList.add('wrong');
+    buttons[q.a].classList.add('correct');
+    $('feedback').innerHTML=`<div class="feedback bad">✗ Belum tepat. ${q.e}</div>`;
+  }
+  $('next-btn').textContent=current===questions.length-1?'Lihat Hasil →':'Soal Berikutnya →';
+  $('next-btn').classList.remove('hidden');
+}
+function timeExpired(){
+  if(answered)return;
+  answered=true;
+  const q=questions[current];
+  const buttons=[...$('options').querySelectorAll('button')];
+  buttons.forEach(b=>b.disabled=true);
+  buttons[q.a].classList.add('correct');
+  $('feedback').innerHTML=`<div class="feedback bad">⌛ Waktu habis! ${q.e}</div>`;
+  $('next-btn').textContent=current===questions.length-1?'Lihat Hasil →':'Soal Berikutnya →';
+  $('next-btn').classList.remove('hidden');
+}
+function nextQuestion(){
+  if(!answered)return;
+  current++;
+  if(current>=questions.length){showResult();return;}
+  showQuestion();
+}
+function showResult(){
+  clearInterval(timerId);
+  $('quiz-screen').classList.add('hidden');
+  $('result-screen').classList.remove('hidden');
+  const maxScore=questions.length*settings[chosenLevel].points;
+  const accuracy=Math.round(correct/questions.length*100);
+  $('final-score').textContent=score;
+  $('correct-count').textContent=`${correct}/${questions.length}`;
+  $('accuracy').textContent=accuracy+'%';
+  $('result-emoji').textContent=accuracy>=80?'🏆':accuracy>=50?'👏':'📖';
+  $('result-title').textContent=accuracy>=80?'Luar biasa!':accuracy>=50?'Bagus, terus berlatih!':'Jangan menyerah!';
+  $('result-message').textContent=`Kamu menyelesaikan level ${settings[chosenLevel].label}. Skor maksimum level ini adalah ${maxScore} poin.`;
+}
+function backHome(){
+  clearInterval(timerId);
+  $('quiz-screen').classList.add('hidden');
+  $('result-screen').classList.add('hidden');
+  $('start-screen').classList.remove('hidden');
+}
+$('start-btn').addEventListener('click',startGame);
+$('next-btn').addEventListener('click',nextQuestion);
+$('again-btn').addEventListener('click',startGame);
+$('home-btn').addEventListener('click',backHome);
+$('quit-btn').addEventListener('click',backHome);
+</script>
+</body>
+</html>
